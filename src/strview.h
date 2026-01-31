@@ -43,6 +43,45 @@ typedef struct string_view {
 
 #define sv_printarg(sv) (sv).size, (sv).data
 
+#ifdef STRVIEW_NOIMPL
+strview_t sv_tok(strview_t* sv, strview_t delim);
+strview_t sv_tokstr(strview_t* sv, const char* delim);
+#else
+static inline strview_t sv_tok(strview_t* sv, strview_t delim) {
+  for (uint32_t i = 0; i < sv->size; i++) {
+    for (uint32_t j = 0; j < delim.size; j++) {
+      if (sv->data[i] == delim.data[j]) {
+        strview_t token = {.size = i, .data = sv->data};
+        sv->data += i + 1;
+        sv->size -= i + 1;
+        return token;
+      }
+    }
+  }
+  strview_t token = *sv;
+  sv->data += sv->size;
+  sv->size = 0;
+  return token;
+}
+
+static inline strview_t sv_tokstr(strview_t* sv, const char* delim) {
+  for (uint32_t i = 0; i < sv->size; i++) {
+    for (const char* p = delim; *p; p++) {
+      if (sv->data[i] == *p) {
+        strview_t token = {.size = i, .data = sv->data};
+        sv->data += i + 1;
+        sv->size -= i + 1;
+        return token;
+      }
+    }
+  }
+  strview_t token = *sv;
+  sv->data += sv->size;
+  sv->size = 0;
+  return token;
+}
+#endif
+
 #ifdef STRBDR_H
 #define sb_toview(sb) ((strview_t){.size = (sb)->size, .data = (sb)->data})
 #define sv_frombdr(sb) ((strview_t){.size = (sb)->size, .data = (sb)->data})
