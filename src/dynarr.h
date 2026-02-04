@@ -21,22 +21,33 @@
 
 #define da_grow_capacity(capacity) ((capacity) < 8 ? 8 : (capacity) * 2)
 
-#define da_free(da) \
-  reallocate((da)->data, (da)->capacity * sizeof((da)->data[0]), 0)
+#define da_realloc(ptr, old_size, new_size)             \
+  ({                                                    \
+    void* _ptr = NULL;                                  \
+    if ((new_size) == 0) {                              \
+      free(ptr);                                        \
+      _ptr = NULL;                                      \
+    } else if ((old_size) == 0) {                       \
+      _ptr = malloc((new_size) * sizeof(*ptr));         \
+    } else {                                            \
+      _ptr = realloc((ptr), (new_size) * sizeof(*ptr)); \
+    }                                                   \
+    _ptr;                                               \
+  })
 
-#define da_reserve(da, rsvsz)                                            \
-  do {                                                                   \
-    if ((rsvsz) > (da)->capacity) {                                      \
-      uint32_t newsz = (da)->capacity;                                   \
-      while ((rsvsz) > newsz) {                                          \
-        newsz = da_grow_capacity(newsz);                                 \
-      }                                                                  \
-      (da)->data =                                                       \
-          reallocate((da)->data, (da)->capacity * sizeof((da)->data[0]), \
-                     newsz * sizeof((da)->data[0]));                     \
-      da_assert((da)->data && "Failed to allocate memory");              \
-      (da)->capacity = newsz;                                            \
-    }                                                                    \
+#define da_free(da) da_realloc((da)->data, (da)->capacity, 0)
+
+#define da_reserve(da, rsvsz)                                      \
+  do {                                                             \
+    if ((rsvsz) > (da)->capacity) {                                \
+      uint32_t _newsz = (da)->capacity;                            \
+      while ((rsvsz) > _newsz) {                                   \
+        _newsz = da_grow_capacity(_newsz);                         \
+      }                                                            \
+      (da)->data = da_realloc((da)->data, (da)->capacity, _newsz); \
+      da_assert((da)->data && "Failed to allocate memory");        \
+      (da)->capacity = _newsz;                                     \
+    }                                                              \
   } while (0)
 
 #define da_append(da, item)            \
@@ -45,7 +56,7 @@
     (da)->data[(da)->size++] = (item); \
   } while (0)
 
-#define da_append_many(da, items, itemsz)     \
+#define da_nappend(da, items, itemsz)         \
   do {                                        \
     da_reserve((da), (da)->size + (itemsz));  \
     memcpy((da)->data + (da)->size, (items),  \
@@ -72,21 +83,5 @@
 
 #define da_foreach(type, it, da) \
   for (type* it = (da)->data; it < (da)->data + (da)->size; it++)
-
-#ifdef DYNARR_NOIMPL
-void* reallocate(void* ptr, uint32_t old_size, uint32_t new_size);
-#else
-static inline void* reallocate(void* ptr, uint32_t old_size,
-                               uint32_t new_size) {
-  if (new_size == 0) {
-    free(ptr);
-    return NULL;
-  } else if (old_size == 0) {
-    return malloc(new_size);
-  } else {
-    return realloc(ptr, new_size);
-  }
-}
-#endif
 
 #endif

@@ -21,19 +21,33 @@ typedef struct string_builder {
 
 #define sb_grow_capacity(capacity) ((capacity) < 8 ? 8 : (capacity) * 2)
 
-#define sb_free(sb) reallocate((sb)->data, (sb)->capacity, 0)
+#define sb_realloc(ptr, old_size, new_size) \
+  ({                                        \
+    void* _ptr = NULL;                      \
+    if ((new_size) == 0) {                  \
+      free(ptr);                            \
+      _ptr = NULL;                          \
+    } else if ((old_size) == 0) {           \
+      _ptr = malloc(new_size);              \
+    } else {                                \
+      _ptr = realloc((ptr), (new_size));    \
+    }                                       \
+    _ptr;                                   \
+  })
 
-#define sb_reserve(sb, rsvsz)                                     \
-  do {                                                            \
-    if ((rsvsz) > (sb)->capacity) {                               \
-      uint32_t newsz = (sb)->capacity;                            \
-      while ((rsvsz) > newsz) {                                   \
-        newsz = sb_grow_capacity(newsz);                          \
-      }                                                           \
-      (sb)->data = reallocate((sb)->data, (sb)->capacity, newsz); \
-      sb_assert((sb)->data && "Failed to allocate memory");       \
-      (sb)->capacity = newsz;                                     \
-    }                                                             \
+#define sb_free(sb) sb_realloc((sb)->data, (sb)->capacity, 0)
+
+#define sb_reserve(sb, rsvsz)                                      \
+  do {                                                             \
+    if ((rsvsz) > (sb)->capacity) {                                \
+      uint32_t _newsz = (sb)->capacity;                            \
+      while ((rsvsz) > _newsz) {                                   \
+        _newsz = sb_grow_capacity(_newsz);                         \
+      }                                                            \
+      (sb)->data = sb_realloc((sb)->data, (sb)->capacity, _newsz); \
+      sb_assert((sb)->data && "Failed to allocate memory");        \
+      (sb)->capacity = _newsz;                                     \
+    }                                                              \
   } while (0)
 
 #define sb_append(sb, ch)             \
@@ -94,22 +108,6 @@ typedef struct string_builder {
 #ifdef STRVIEW_H
 #define sb_toview(sb) ((strview_t){.size = (sb)->size, .data = (sb)->data})
 #define sv_frombdr(sb) ((strview_t){.size = (sb)->size, .data = (sb)->data})
-#endif
-
-#ifdef STRBDR_NOIMPL
-void* reallocate(void* ptr, uint32_t old_size, uint32_t new_size);
-#else
-static inline void* reallocate(void* ptr, uint32_t old_size,
-                               uint32_t new_size) {
-  if (new_size == 0) {
-    free(ptr);
-    return NULL;
-  } else if (old_size == 0) {
-    return malloc(new_size);
-  } else {
-    return realloc(ptr, new_size);
-  }
-}
 #endif
 
 #endif  // STRBDR
