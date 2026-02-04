@@ -81,7 +81,7 @@
     (da)->size--;                  \
   } while (0)
 
-#define da_foreach(type, it, da) \
-  for (type* it = (da)->data; it < (da)->data + (da)->size; it++)
+#define da_foreach(it, da) \
+  for (typeof((da)->data) it = (da)->data; it < (da)->data + (da)->size; it++)
 
 #endif
