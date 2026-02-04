@@ -7,4 +7,4 @@ test_dir="$work_dir/test"
 build_dir="$work_dir/build"
 
 mkdir -p $build_dir
-cc ${test_dir}/${name}.c -o $build_dir/${name} -I${src_dir}
+cc ${test_dir}/${name}.c -o $build_dir/${name} -I${src_dir} -fsanitize=address -ggdb -Wall -Wextra
