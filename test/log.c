@@ -1,4 +1,4 @@
-#define LOG_LEVEL WARNING
+#define LOG_LEVEL WARN
 #include <log.h>
 #include <typedef.h>
 #include <dynarr.h>
@@ -12,9 +12,9 @@ int main() {
   da_append(&v, 42);
   da_append(&v, 0x20);
   da_append(&v, 0x30);
-  da_foreach(usize, i, &v) { LOG(INFO, "Item %lu", *i); }
+  da_foreach(i, &v) { LOG(INFO, "Item %lu", *i); }
   da_remove_unordered(&v, 0);
-  da_foreach(usize, i, &v) { LOG(WARNING, "Item %lu", *i); }
+  da_foreach(i, &v) { LOG(WARN, "Item %lu", *i); }
 
   LOG(ERROR, "End logging and free stuffs ...");
   da_free(&v);

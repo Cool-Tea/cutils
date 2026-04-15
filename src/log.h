@@ -14,7 +14,7 @@ enum log_level {
   ALL = 0,
   DEBUG,
   INFO,
-  WARNING,
+  WARN,
   ERROR,
   DISABLE,
 };
@@ -26,7 +26,7 @@ enum log_level {
 
 #define DEBUG_PREFIX "\033[3;37m [DEBUG]"
 #define INFO_PREFIX "\033[0;32m [INFO]"
-#define WARNING_PREFIX "\033[4;33m [WARNING]"
+#define WARN_PREFIX "\033[4;33m [WARN]"
 #define ERROR_PREFIX "\033[1;31m [ERROR]"
 
 #define LOG(level, fmt, ...)                                             \
